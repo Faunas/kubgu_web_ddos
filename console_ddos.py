@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
+import art
 
 os.environ["PATH"] += os.pathsep + r"C:\Program Files (x86)\Microsoft\Edge Beta\Application"
 urls = [
@@ -18,8 +19,17 @@ urls = [
     "https://www.kubsu.ru/ru/node/37496"
 ]
 
-work_mode_only_from_config = 0
+ART = art.text2art('KUBGU Viewer')
+with open("config.txt") as f:
+    for line in f:
+        if "art_on_start" in line:
+            if line.split("=")[1].strip() == "1":
+                art_on_start = 1
+                print(ART)
+            break
 
+
+work_mode_only_from_config = 0
 with open("config.txt") as f:
     for line in f:
         if "work_mode_only_from_config" in line:
