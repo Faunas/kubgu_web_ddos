@@ -11,6 +11,12 @@ from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 import art
 
+faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
+            "Для того, чтобы не вводить данные вручную, вы можете задать конкретные флаги и переменные в файле config.txt.\n" \
+            "После установки work_mode_only_from_config = 1, вам больше никогда не придётся выбирать режим работы.\n"\
+            "Все переменные имеют комментарии и интуитивно понятны.\n" \
+            "При следующем запуске вы не увидите данное уведомление.\n\n\n"\
+
 os.environ["PATH"] += os.pathsep + r"C:\Program Files (x86)\Microsoft\Edge Beta\Application"
 urls = [
     "https://www.kubsu.ru/ru/node/37499",
@@ -22,16 +28,36 @@ urls = [
 ART = art.text2art('KUBGU Viewer')
 with open("config.txt") as f:
     for line in f:
+        if line.startswith("#"):
+            continue
         if "art_on_start" in line:
             if line.split("=")[1].strip() == "1":
                 art_on_start = 1
                 print(ART)
+                time.sleep(1.5)
             break
+
+with open('config.txt', 'r') as f:
+    lines = f.readlines()
+
+with open('config.txt', 'w') as f:
+    for line in lines:
+        if line.startswith('new_user'):
+            if 'new_user = 1' in line:
+                print(faq_text)
+                time.sleep(5)
+                line = 'new_user = 0\n'
+        f.write(line)
+
+
+
 
 
 work_mode_only_from_config = 0
 with open("config.txt") as f:
     for line in f:
+        if line.startswith("#"):
+            continue
         if "work_mode_only_from_config" in line:
             if line.split("=")[1].strip() == "1":
                 work_mode_only_from_config = 1
@@ -63,6 +89,8 @@ if work_mode_only_from_config == 0:
             'файле конфигурации config.txt\n----------------------------------------------------------------------------------------------------------------')
         with open('config.txt', 'r') as f:
             for line in f:
+                if line.startswith("#"):
+                    continue
                 key, value = line.strip().split('=')
                 if key == 'pause_time':
                     pause_time = float(value)
@@ -73,6 +101,8 @@ if work_mode_only_from_config == 0:
 else:
     with open('config.txt', 'r') as f:
         for line in f:
+            if line.startswith("#"):
+                continue
             key, value = line.strip().split('=')
             if key == 'pause_time':
                 pause_time = float(value)
