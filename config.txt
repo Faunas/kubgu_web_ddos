@@ -1,4 +1,4 @@
-pause_time=6.1
+pause_time=6.2
 NUM_THREADS=1
 counter_web_sites=4
 work_mode_only_from_config = 1
