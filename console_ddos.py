@@ -10,6 +10,9 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 import art
+from loggerfile import *
+
+
 
 faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
             "Для того, чтобы не вводить данные вручную, вы можете задать конкретные флаги и переменные в файле config.txt.\n" \
@@ -19,6 +22,15 @@ faq_text = "[!!!] Данное уведомление появится лишь 
 
 os.environ["PATH"] += os.pathsep + r"msedgedriver.exe"
 urls = []
+
+with open('config.txt', 'r') as f:
+    for line in f:
+        if line.startswith("#"):
+            continue
+        key, value = line.strip().split('=')
+        if key == 'views_to_write_logfile':
+            views_to_write_logfile = int(value)
+            text_about_log=(f"Логирование в файл произойдёт при {views_to_write_logfile}+ просмотров. (Меняется в конфиге)")
 
 with open('links.txt', 'r') as f:
     lines = f.readlines()
@@ -50,10 +62,10 @@ with open('config.txt', 'r') as f:
 with open('config.txt', 'w') as f:
     for line in lines:
         if line.startswith('new_user'):
-            if 'new_user = 1' in line:
+            if 'new_user=1' in line:
                 print(faq_text)
                 time.sleep(5)
-                line = 'new_user = 0\n'
+                line = 'new_user=0\n'
         f.write(line)
 
 
@@ -122,7 +134,7 @@ else:
                 counter_web_sites = int(value)
     print(f"""
     +--------[УСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ]---------+
-    |+----------------------------+----------+|
+    |+----------------------------+----------++
     ||        Наименование        | Значение ||
     |+----------------------------+----------+|
     ||     Время ожидания         |   {pause_time}    ||
@@ -132,7 +144,8 @@ else:
     ++----------------------------+----------++------------------------------+|
     ||Возможное время на сайте исходя из установленного время ожидания:      ||
     ||Минимум: {int(float(pause_time) * 6  + float(19.6) + 2)} секунд.                                                    ||
-    ||Максимум: {int(float(pause_time) * 6 + float(64.4) + 2)} секунд.                                                  ||
+    ||Максимум: {int(float(pause_time) * 6 + float(64.4) + 2)} секунд.                                                   ||
+    ||{text_about_log}||
     ++-----------------------------------------------------------------------++""")
 
 
@@ -214,8 +227,12 @@ if __name__ == '__main__':
         gc.collect()
         counter += 1
         print(f"Количество итераций: {counter}")
+        print(f"Количество посещенний сайтов: {counter*NUM_THREADS}")
+        if counter*NUM_THREADS >= views_to_write_logfile:
+            print(f'Количество просмотров достигла отметки в {views_to_write_logfile} посещений в {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+            logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile}')
+            counter = 0
 
 # TODO: Использовать невидимый для браузера селениум
 #  Сделать большую задержку создания потоков на временном промежутке от 20:00 До 6:00
-#  Добавить логирование/Информирование на каждые 100 просмотров страницы
 #  Закомпилить exe файл.
