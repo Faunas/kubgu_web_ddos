@@ -199,7 +199,13 @@ async def main():
             loop = asyncio.get_event_loop()
             tasks = []
             for i in range(NUM_THREADS):
-                time.sleep(random.uniform(1, 2.5))  #   Задержка между потоками.
+                current_time = datetime.datetime.now().time()
+                if current_time >= datetime.time(20, 0) or current_time < datetime.time(7, 0):
+                    sleep_between_threads = random.uniform(600, 1200)
+                    print(f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {int(sleep_between_threads)/60} минут")
+                else:
+                    sleep_between_threads = random.uniform(1, 2.5)
+                time.sleep(sleep_between_threads)  # Задержка между потоками.
                 tasks.append(loop.run_in_executor(executor, go_to_url, i, urls[i % counter_web_sites]))
             await asyncio.gather(*tasks)
             #   Очистка памяти.
@@ -233,6 +239,5 @@ if __name__ == '__main__':
             logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile}')
             counter = 0
 
-# TODO: Использовать невидимый для браузера селениум
-#  Сделать большую задержку создания потоков на временном промежутке от 20:00 До 6:00
+# TODO: Использовать невидимый для браузера селениум(Реализуемо только на Chrome)
 #  Закомпилить exe файл.
