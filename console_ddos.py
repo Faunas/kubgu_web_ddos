@@ -17,13 +17,20 @@ faq_text = "[!!!] Данное уведомление появится лишь 
             "Все переменные имеют комментарии и интуитивно понятны.\n" \
             "При следующем запуске вы не увидите данное уведомление.\n\n\n"\
 
-os.environ["PATH"] += os.pathsep + r"C:\Program Files (x86)\Microsoft\Edge Beta\Application"
-urls = [
-    "https://www.kubsu.ru/ru/node/37499",
-    "https://www.kubsu.ru/ru/node/37498",
-    "https://www.kubsu.ru/ru/node/37497",
-    "https://www.kubsu.ru/ru/node/37496"
-]
+os.environ["PATH"] += os.pathsep + r"msedgedriver.exe"
+urls = []
+
+with open('links.txt', 'r') as f:
+    lines = f.readlines()
+for line in lines:
+    urls.append(line.replace('\n', ''))
+
+random_university_words = []
+with open('search.txt', encoding="UTF-8") as f:
+    lines = f.readlines()
+for line in lines:
+    random_university_words.append(line.replace('\n', ''))
+
 
 ART = art.text2art('KUBGU Viewer')
 with open("config.txt") as f:
@@ -64,6 +71,8 @@ with open("config.txt") as f:
                 print("Данные берутся из файла конфигураций. (Установлен флаг work_mode_only_from_config)")
             break
 
+
+
 if work_mode_only_from_config == 0:
     print("--- Нужно выбрать режим работы!\n"
           "1. Ввод данных вручную\n"
@@ -98,6 +107,7 @@ if work_mode_only_from_config == 0:
                     NUM_THREADS = int(value)
                 elif key == 'counter_web_sites':
                     counter_web_sites = int(value)
+
 else:
     with open('config.txt', 'r') as f:
         for line in f:
@@ -121,15 +131,13 @@ else:
     ||     Режим работы из конфига|    {work_mode_only_from_config}     ||
     ++----------------------------+----------++------------------------------+|
     ||Возможное время на сайте исходя из установленного время ожидания:      ||
-    ||Минимум: {int(float(pause_time) * 6 + float(19.6) + 2)} секунд.                                                    ||
+    ||Минимум: {int(float(pause_time) * 6  + float(19.6) + 2)} секунд.                                                    ||
     ||Максимум: {int(float(pause_time) * 6 + float(64.4) + 2)} секунд.                                                  ||
-    ||Среднее возможное время: {int(float(pause_time) * 6 + float(19.6) +int(float(pause_time) * 6 + float(19.6) + 2)) / 2} секунд.                                  ||
     ++-----------------------------------------------------------------------++""")
 
 
 def go_to_url(index, url):
     options = Options()
-    options.binary_location = r"C:\Program Files (x86)\Microsoft\Edge Beta\Application\msedge.exe"
     options.add_argument("--headless")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -138,7 +146,7 @@ def go_to_url(index, url):
     if index >= counter_web_sites:
         url = random.choice(urls)
 
-    with webdriver.Edge(options=options) as driver:
+    with webdriver.Edge("msedgedriver.exe", options=options) as driver:
         start_time = time.monotonic()
         driver.get(url)
         time.sleep(pause_time)
@@ -148,7 +156,7 @@ def go_to_url(index, url):
         driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2').click()
         time.sleep(pause_time + random.uniform(3.5, 21.5))
         text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
-        text_form.send_keys("Лукьянчиков Максим Владимирович")
+        text_form.send_keys(random.choice(random_university_words))
         # print(text_form.text)
         driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
         time.sleep(pause_time + random.uniform(2.5, 10.5))
@@ -178,6 +186,7 @@ async def main():
             loop = asyncio.get_event_loop()
             tasks = []
             for i in range(NUM_THREADS):
+                time.sleep(random.uniform(1, 2.5))  #   Задержка между потоками.
                 tasks.append(loop.run_in_executor(executor, go_to_url, i, urls[i % counter_web_sites]))
             await asyncio.gather(*tasks)
             #   Очистка памяти.
@@ -205,3 +214,8 @@ if __name__ == '__main__':
         gc.collect()
         counter += 1
         print(f"Количество итераций: {counter}")
+
+# TODO: Использовать невидимый для браузера селениум
+#  Сделать большую задержку создания потоков на временном промежутке от 20:00 До 6:00
+#  Добавить логирование/Информирование на каждые 100 просмотров страницы
+#  Закомпилить exe файл.
