@@ -11,19 +11,31 @@ from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.service import Service
 import art
-import selenium
 from loggerfile import *
-
+import re
 
 faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
-            "Для того, чтобы не вводить данные вручную, вы можете задать конкретные флаги и переменные в файле config.txt.\n" \
-            "После установки work_mode_only_from_config = 1, вам больше никогда не придётся выбирать режим работы.\n"\
-            "Все переменные имеют комментарии и интуитивно понятны.\n" \
-            "При следующем запуске вы не увидите данное уведомление.\n\n\n"\
-
+           "Для того, чтобы не вводить данные вручную, вы можете задать конкретные флаги и переменные в файле config.txt.\n" \
+           "После установки work_mode_only_from_config = 1, вам больше никогда не придётся выбирать режим работы.\n" \
+           "Все переменные имеют комментарии и интуитивно понятны.\n" \
+           "При следующем запуске вы не увидите данное уведомление.\n\n\n"
 os.environ["PATH"] += os.pathsep + r"msedgedriver.exe"
 urls = []
 
+with open('config.txt', 'r') as f:
+    content = f.read()
+
+match = re.search(r'debug_mode\s*=\s*(\d+)', content)
+#   Поиск значения для режима отладки
+if match:
+    debug_mode = int(match.group(1))
+    if debug_mode == 1:
+        print(
+            "\n\n\nВКЛЮЧЁН РЕЖИМ ОТЛАДКИ! БРАУЗЕРЫ БУДУТ ВИДНЫ. ЧТОБЫ ОТКЛЮЧИТЬ ИЗМЕНИТЕ ЗНАЧЕНИЕ С 1 НА 0 (debug_mode=0)")
+        time.sleep(5)
+    else:
+        print("Выключен")
+#   Поиск значения для логирования
 with open('config.txt', 'r') as f:
     for line in f:
         if line.startswith("#"):
@@ -31,21 +43,24 @@ with open('config.txt', 'r') as f:
         key, value = line.strip().split('=')
         if key == 'views_to_write_logfile':
             views_to_write_logfile = int(value)
-            text_about_log=(f"Логирование в файл произойдёт при {views_to_write_logfile}+ просмотров. (Меняется в конфиге)")
+            text_about_log = (
+                f"Логирование в файл произойдёт при {views_to_write_logfile}+ просмотров. (Меняется в конфиге)")
 
+#   Добавление всех ссылок из файла в список urls.
 with open('links.txt', 'r') as f:
     lines = f.readlines()
 for line in lines:
     urls.append(line.replace('\n', ''))
 
+#   Добавление всех слов для поиска из файла в список random_university_words.
 random_university_words = []
 with open('search.txt', encoding="UTF-8") as f:
     lines = f.readlines()
 for line in lines:
     random_university_words.append(line.replace('\n', ''))
 
-
 ART = art.text2art('KUBGU Viewer')
+#   Поиск значения для вывода логотипа при старте
 with open("config.txt") as f:
     for line in f:
         if line.startswith("#"):
@@ -56,7 +71,9 @@ with open("config.txt") as f:
                 print(ART)
                 time.sleep(1.5)
             break
-
+#   Поиск значения, уведомляющее о том, что пользователь новый,
+#   если это так, то выводит приветственное сообщение и меняет
+#   переменную на 0, чтобы пользователь не считался новым.
 with open('config.txt', 'r') as f:
     lines = f.readlines()
 
@@ -68,11 +85,7 @@ with open('config.txt', 'w') as f:
                 time.sleep(5)
                 line = 'new_user=0\n'
         f.write(line)
-
-
-
-
-
+#   Поиск значения для режима работы из конфига.
 work_mode_only_from_config = 0
 with open("config.txt") as f:
     for line in f:
@@ -83,8 +96,6 @@ with open("config.txt") as f:
                 work_mode_only_from_config = 1
                 print("Данные берутся из файла конфигураций. (Установлен флаг work_mode_only_from_config)")
             break
-
-
 
 if work_mode_only_from_config == 0:
     print("--- Нужно выбрать режим работы!\n"
@@ -122,6 +133,7 @@ if work_mode_only_from_config == 0:
                     counter_web_sites = int(value)
 
 else:
+    #   Поиск значений, которые установлены в конфиге.
     with open('config.txt', 'r') as f:
         for line in f:
             if line.startswith("#"):
@@ -144,7 +156,7 @@ else:
     ||     Режим работы из конфига|    {work_mode_only_from_config}     ||
     ++----------------------------+----------++------------------------------+|
     ||Возможное время на сайте исходя из установленного время ожидания:      ||
-    ||Минимум: {int(float(pause_time) * 6  + float(19.6) + 2)} секунд.                                                    ||
+    ||Минимум: {int(float(pause_time) * 6 + float(19.6) + 2)} секунд.                                                    ||
     ||Максимум: {int(float(pause_time) * 6 + float(64.4) + 2)} секунд.                                                   ||
     ||{text_about_log}||
     ++-----------------------------------------------------------------------++""")
@@ -152,7 +164,8 @@ else:
 
 def go_to_url(index, url):
     options = Options()
-    options.add_argument("--headless")
+    if debug_mode == 0:
+        options.add_argument("--headless")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -204,7 +217,8 @@ async def main():
                 if current_time >= datetime.time(20, 0) or current_time < datetime.time(7, 0):
                     sleep_between_threads = random.uniform(600, 1200)
                     next_thread_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_between_threads)
-                    print(f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {round(int(sleep_between_threads)/60)} минут")
+                    print(
+                        f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {round(int(sleep_between_threads) / 60)} минут")
                     print(f"Следующий поток запустится в {next_thread_time.strftime('%Y-%m-%d %H:%M:%S')}")
                 else:
                     sleep_between_threads = random.uniform(1, 2.5)
@@ -237,8 +251,12 @@ if __name__ == '__main__':
         gc.collect()
         counter += 1
         print(f"Количество итераций: {counter}")
-        print(f"Количество посещенний сайтов: {counter*NUM_THREADS}")
-        if counter*NUM_THREADS >= views_to_write_logfile:
-            print(f'Количество просмотров достигла отметки в {views_to_write_logfile} посещений в {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-            logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile} Всего посещений за текущий сеанс: {counter*NUM_THREADS}')
+        print(f"Количество посещенний сайтов: {counter * NUM_THREADS}")
+        if counter * NUM_THREADS >= views_to_write_logfile:
+            print(
+                f'Количество просмотров достигла отметки в {views_to_write_logfile} посещений в {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+            logger.info(
+                f'Количество просмотров достигла отметки в {views_to_write_logfile} Всего посещений за текущий сеанс: {counter * NUM_THREADS}')
             counter = 0
+
+#   TODO: Использовать чтение из json, вместо чтения из файлов по несколько раз.
