@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.edge.service import Service
 import art
 import selenium
 from loggerfile import *
@@ -159,7 +160,7 @@ def go_to_url(index, url):
     if index >= counter_web_sites:
         url = random.choice(urls)
 
-    with webdriver.Edge("msedgedriver.exe", options=options) as driver:
+    with webdriver.Edge(service=Service("msedgedriver.exe"), options=options) as driver:
         start_time = time.monotonic()
         driver.get(url)
         time.sleep(pause_time)
