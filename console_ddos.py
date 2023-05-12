@@ -13,6 +13,7 @@ from selenium.webdriver.edge.service import Service
 import art
 from loggerfile import *
 import re
+import json
 
 faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
            "Для того, чтобы не вводить данные вручную, вы можете задать конкретные флаги и переменные в файле config.txt.\n" \
@@ -22,29 +23,44 @@ faq_text = "[!!!] Данное уведомление появится лишь 
 os.environ["PATH"] += os.pathsep + r"msedgedriver.exe"
 urls = []
 
+
+config_dict = {}
+with open('config.txt', 'r') as f:
+    for line in f:
+        line = line.strip()
+        if line.startswith('#') or not line:
+            continue
+        key, value = line.split('=')
+        config_dict[key.strip()] = value.strip()
+
+with open('dev_config.json', 'w') as f:
+    json.dump(config_dict, f)
+
+with open('dev_config.json', 'r') as f:
+    config_dict = json.load(f)
+
+pause_time = float(config_dict['pause_time'])
+NUM_THREADS = int(config_dict['NUM_THREADS'])
+counter_web_sites = int(config_dict['counter_web_sites'])
+work_mode_only_from_config = int(int(config_dict['work_mode_only_from_config']))
+art_on_start = bool(int(config_dict['art_on_start']))
+new_user = bool(int(config_dict['new_user']))
+views_to_write_logfile = int(config_dict['views_to_write_logfile'])
+debug_mode = bool(int(config_dict['debug_mode']))
+
+
 with open('config.txt', 'r') as f:
     content = f.read()
 
 match = re.search(r'debug_mode\s*=\s*(\d+)', content)
 #   Поиск значения для режима отладки
-if match:
-    debug_mode = int(match.group(1))
-    if debug_mode == 1:
-        print(
-            "\n\n\nВКЛЮЧЁН РЕЖИМ ОТЛАДКИ! БРАУЗЕРЫ БУДУТ ВИДНЫ. ЧТОБЫ ОТКЛЮЧИТЬ ИЗМЕНИТЕ ЗНАЧЕНИЕ С 1 НА 0 (debug_mode=0)")
-        time.sleep(5)
-    else:
-        print("Выключен")
-#   Поиск значения для логирования
-with open('config.txt', 'r') as f:
-    for line in f:
-        if line.startswith("#"):
-            continue
-        key, value = line.strip().split('=')
-        if key == 'views_to_write_logfile':
-            views_to_write_logfile = int(value)
-            text_about_log = (
-                f"Логирование в файл произойдёт при {views_to_write_logfile}+ просмотров. (Меняется в конфиге)")
+
+if debug_mode == 1:
+    print(
+        "\n\n\nВКЛЮЧЁН РЕЖИМ ОТЛАДКИ! БРАУЗЕРЫ БУДУТ ВИДНЫ. ЧТОБЫ ОТКЛЮЧИТЬ ИЗМЕНИТЕ ЗНАЧЕНИЕ С 1 НА 0 (debug_mode=0)")
+    time.sleep(5)
+
+text_about_log = f"Логирование в файл произойдёт при {views_to_write_logfile}+ просмотров. (Меняется в конфиге)"
 
 #   Добавление всех ссылок из файла в список urls.
 with open('links.txt', 'r') as f:
@@ -61,16 +77,9 @@ for line in lines:
 
 ART = art.text2art('KUBGU Viewer')
 #   Поиск значения для вывода логотипа при старте
-with open("config.txt") as f:
-    for line in f:
-        if line.startswith("#"):
-            continue
-        if "art_on_start" in line:
-            if line.split("=")[1].strip() == "1":
-                art_on_start = 1
-                print(ART)
-                time.sleep(1.5)
-            break
+if art_on_start == 1:
+    print(ART)
+    time.sleep(1.5)
 #   Поиск значения, уведомляющее о том, что пользователь новый,
 #   если это так, то выводит приветственное сообщение и меняет
 #   переменную на 0, чтобы пользователь не считался новым.
@@ -85,17 +94,10 @@ with open('config.txt', 'w') as f:
                 time.sleep(5)
                 line = 'new_user=0\n'
         f.write(line)
-#   Поиск значения для режима работы из конфига.
-work_mode_only_from_config = 0
-with open("config.txt") as f:
-    for line in f:
-        if line.startswith("#"):
-            continue
-        if "work_mode_only_from_config" in line:
-            if line.split("=")[1].strip() == "1":
-                work_mode_only_from_config = 1
-                print("Данные берутся из файла конфигураций. (Установлен флаг work_mode_only_from_config)")
-            break
+
+if work_mode_only_from_config == 1:
+    print("Данные берутся из файла конфигураций. (Установлен флаг work_mode_only_from_config)")
+
 
 if work_mode_only_from_config == 0:
     print("--- Нужно выбрать режим работы!\n"
@@ -134,20 +136,9 @@ if work_mode_only_from_config == 0:
 
 else:
     #   Поиск значений, которые установлены в конфиге.
-    with open('config.txt', 'r') as f:
-        for line in f:
-            if line.startswith("#"):
-                continue
-            key, value = line.strip().split('=')
-            if key == 'pause_time':
-                pause_time = float(value)
-            elif key == 'NUM_THREADS':
-                NUM_THREADS = int(value)
-            elif key == 'counter_web_sites':
-                counter_web_sites = int(value)
     print(f"""
     +--------[УСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ]---------+
-    |+----------------------------+----------++
+    ++----------------------------+----------++
     ||        Наименование        | Значение ||
     |+----------------------------+----------+|
     ||     Время ожидания         |   {pause_time}    ||
@@ -209,7 +200,7 @@ def go_to_url(index, url):
 
 async def main():
     try:
-        with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        with ThreadPoolExecutor(max_workers=int(NUM_THREADS)) as executor:
             loop = asyncio.get_event_loop()
             tasks = []
             for i in range(NUM_THREADS):
