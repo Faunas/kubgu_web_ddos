@@ -202,7 +202,9 @@ async def main():
                 current_time = datetime.datetime.now().time()
                 if current_time >= datetime.time(20, 0) or current_time < datetime.time(7, 0):
                     sleep_between_threads = random.uniform(600, 1200)
-                    print(f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {int(sleep_between_threads)/60} минут")
+                    next_thread_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_between_threads)
+                    print(f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {round(int(sleep_between_threads)/60)} минут")
+                    print(f"Следующий поток запустится в {next_thread_time.strftime('%Y-%m-%d %H:%M:%S')}")
                 else:
                     sleep_between_threads = random.uniform(1, 2.5)
                 tasks.append(loop.run_in_executor(executor, go_to_url, i, urls[i % counter_web_sites]))
@@ -237,5 +239,5 @@ if __name__ == '__main__':
         print(f"Количество посещенний сайтов: {counter*NUM_THREADS}")
         if counter*NUM_THREADS >= views_to_write_logfile:
             print(f'Количество просмотров достигла отметки в {views_to_write_logfile} посещений в {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
-            logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile}')
+            logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile} Всего посещений за текущий сеанс: {counter*NUM_THREADS}')
             counter = 0
