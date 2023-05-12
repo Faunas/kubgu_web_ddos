@@ -10,8 +10,8 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 import art
+import selenium
 from loggerfile import *
-
 
 
 faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
@@ -205,8 +205,9 @@ async def main():
                     print(f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {int(sleep_between_threads)/60} минут")
                 else:
                     sleep_between_threads = random.uniform(1, 2.5)
-                time.sleep(sleep_between_threads)  # Задержка между потоками.
                 tasks.append(loop.run_in_executor(executor, go_to_url, i, urls[i % counter_web_sites]))
+                time.sleep(sleep_between_threads)  # Задержка между потоками.
+
             await asyncio.gather(*tasks)
             #   Очистка памяти.
             print("Очищаю память.")
@@ -238,6 +239,3 @@ if __name__ == '__main__':
             print(f'Количество просмотров достигла отметки в {views_to_write_logfile} посещений в {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
             logger.info(f'Количество просмотров достигла отметки в {views_to_write_logfile}')
             counter = 0
-
-# TODO: Использовать невидимый для браузера селениум(Реализуемо только на Chrome)
-#  Закомпилить exe файл.
