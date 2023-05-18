@@ -13,7 +13,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service
-
 from loggerfile import *
 
 faq_text = "[!!!] Данное уведомление появится лишь однократно!\n" \
@@ -150,14 +149,129 @@ else:
     ||{text_about_log}||
     ++-----------------------------------------------------------------------++""")
 
-all_events1 = ["Скролл страницы только вниз", "Скролл страницы вверх и вниз", "Быстрый скролл странницы вниз",
+all_events = ["Скролл страницы только вниз", "Скролл страницы вверх и вниз", "Быстрый скролл странницы вниз",
               "Проскролить страницу вниз и вверх, написать сообщение в поиск", "Ввести в поиск сообщение",
               "Ввести в поиск сообщение и перейти по первой ссылке",
               "Проскролить страницу вниз и вверх, ввести в поиск сообщение, перейти по 4 ссылке, вернуться обратно, перейти по 2 ссылке, проскроллить вниз, вернуться на главную страницу, проскроллить главную страницу"]
-all_events = ["Скролл страницы только вниз"]
-def scroll_only_down():
-    print("Зашёл в функцию скрол вниз")
-    time.sleep(random.uniform(20, 70))
+all_events1 = ["Скролл страницы только вниз"]
+
+
+def slow_scroll_down(driver, scroll_amount, delay):  # Скролл страницы только вниз (медленно)
+    current_scroll_position = 0
+    while current_scroll_position < scroll_amount:
+        driver.execute_script("window.scrollBy(0, 1);")
+        current_scroll_position += 1
+        time.sleep(delay)
+    time.sleep(pause_time + random.uniform(1, 5))
+
+
+def slow_scroll_down_up(driver, scroll_amount, delay):  # Скролл страницы вниз и вверх (медленно)
+    current_scroll_position = 0
+    scrolling_down = True
+
+    while current_scroll_position < scroll_amount:
+        if scrolling_down:
+            driver.execute_script("window.scrollBy(0, 1);")
+            current_scroll_position += 1
+        else:
+            driver.execute_script("window.scrollBy(0, -1);")
+            current_scroll_position -= 1
+
+        time.sleep(delay)
+
+        if current_scroll_position >= scroll_amount:
+            scrolling_down = False
+        time.sleep(pause_time + random.uniform(1, 5))
+
+
+def fast_scroll_down(driver):
+    driver.execute_script("window.scrollBy(0, window.innerHeight);")  # Скролл страницы вниз (Очень быстро)
+    time.sleep(pause_time + random.uniform(1, 5))
+
+
+def slow_scroll_down_up_and_write_message(driver, scroll_amount, delay):
+    current_scroll_position = 0
+    scrolling_down = True
+
+    while current_scroll_position < scroll_amount:
+        if scrolling_down:
+            driver.execute_script("window.scrollBy(0, 1);")
+            current_scroll_position += 1
+        else:
+            driver.execute_script("window.scrollBy(0, -1);")
+            current_scroll_position -= 1
+
+        time.sleep(delay)
+
+        # Проверяем, достигли ли нижней точки страницы
+        if current_scroll_position >= scroll_amount:
+            scrolling_down = False
+
+    text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
+    text_form.send_keys(random.choice(random_university_words))
+    driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
+    time.sleep(pause_time + random.uniform(2.5, 10.5))
+
+
+def only_write_message(driver):
+    text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
+    text_form.send_keys(random.choice(random_university_words))
+    driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
+    time.sleep(pause_time + random.uniform(2.5, 10.5))
+
+
+def write_message_and_get_first_link(driver):
+    text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
+    text_form.send_keys(random.choice(random_university_words))
+    driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
+    time.sleep(pause_time + random.uniform(2.5, 10.5))
+    try:
+        driver.find_element(by=By.CSS_SELECTOR,
+                            value='div.views-row.views-row-1.views-row-odd.views-row-first > div > span > a').click()
+        time.sleep(pause_time + 1.5)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    except Exception:
+        print("Ошибка в функции write_message_and_get_first_link. Не удалось кликнуть по первой ссылке.")
+    time.sleep(pause_time + random.uniform(1, 5))
+
+
+def all_in_one_super_random(driver):
+    slow_scroll_down(driver, 1000, 0.01)  # Скролл страницы только вниз (медленно)
+    slow_scroll_down_up(driver, 1000, 0.01)  # Скролл страницы вниз и вверх (медленно)
+
+
+    # Ввод сообщения в поиск
+    text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
+    text_form.send_keys(random.choice(random_university_words))
+    driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
+    time.sleep(pause_time + random.uniform(2.5, 10.5))
+    time.sleep(random.uniform(1, 4))  # Предполагаемая задержка на загрузку страницы
+    #   Переход по 4 ссылке
+    try:
+        driver.find_element(by=By.CSS_SELECTOR,
+                            value='div.views-row.views-row-4.views-row-even > div > span > a').click()
+        time.sleep(random.uniform(1, 4))  # Предполагаемая задержка на загрузку страницы
+
+        slow_scroll_down(driver, 1000, 0.01)  # Скролл страницы только вниз (медленно)
+    except Exception:
+        pass
+
+    # Возвращение обратно и переход по 2 ссылке
+    driver.back()
+    time.sleep(random.uniform(1, 4))  # Предполагаемая задержка на возвращение обратно
+    try:
+        driver.find_element(by=By.CSS_SELECTOR,
+                            value='div.views-row.views-row-2.views-row-even > div > span > a').click()
+        time.sleep(random.uniform(1, 4))  # Предполагаемая задержка на загрузку страницы
+
+        slow_scroll_down(driver, 1000, 0.01)  # Скролл страницы только вниз (медленно)
+    except Exception:
+        pass
+    driver.get("https://www.kubsu.ru/ru")  # Возврат на главную страницу
+    time.sleep(random.uniform(1, 4))  # Предполагаемая задержка на загрузку главной страницы
+
+    slow_scroll_down_up(driver, 1000, 0.01)  # Быстрый скролл главной страницы
+
 
 def go_to_url(index, url):
     options = Options()
@@ -174,34 +288,35 @@ def go_to_url(index, url):
         try:
             start_time = time.monotonic()
             driver.get(url)
-            time.sleep(pause_time)
+            time.sleep(random.uniform(2, 5))
             #   Выбор рандомного действия.
             my_random_event = random.choice(all_events)
             if my_random_event == "Скролл страницы только вниз":
-                scroll_only_down()
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(pause_time + random.uniform(2.5, 10.5))
-            driver.execute_script("window.scrollTo(0, 0);")
-            driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2').click()
-            time.sleep(pause_time + random.uniform(3.5, 21.5))
-            text_form = driver.find_element(by=By.CSS_SELECTOR, value='#edit-custom-search-blocks-form-1--2')
-            text_form.send_keys(random.choice(random_university_words))
-            # print(text_form.text)
-            driver.find_element(by=By.CSS_SELECTOR, value='#edit-actions').click()
-            time.sleep(pause_time + random.uniform(2.5, 10.5))
-            try:
-                driver.find_element(by=By.CSS_SELECTOR,
-                                    value='div.views-row.views-row-1.views-row-odd.views-row-first > div > span > a').click()
-                time.sleep(pause_time + 1.5)
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            except Exception:
-                pass
-            # print("Не найдено")
-            time.sleep(pause_time + random.uniform(1.5, 4.9))
-            for i in range(4):
-                driver.execute_script("window.scrollBy(0, -500);")
-                time.sleep(random.uniform(1.1, 3.5))
-            time.sleep(2)
+                print(my_random_event)
+                slow_scroll_down(driver, 1000,
+                                 0.01)  # Медленный скролл на 1000 пикселей с задержкой 0.01 секунды между шагами
+            elif my_random_event == "Скролл страницы вверх и вниз":
+                print(my_random_event)
+                slow_scroll_down_up(driver, 1000, 0.01)
+            elif my_random_event == "Быстрый скролл странницы вниз":
+                print(my_random_event)
+                fast_scroll_down(driver)
+            elif my_random_event == "Проскролить страницу вниз и вверх, написать сообщение в поиск":
+                print(my_random_event)
+                slow_scroll_down_up_and_write_message(driver, 1000, 0.01)
+            elif my_random_event == "Ввести в поиск сообщение":
+                print(my_random_event)
+                only_write_message(driver)
+            elif my_random_event == "Ввести в поиск сообщение и перейти по первой ссылке":
+                print(my_random_event)
+                write_message_and_get_first_link(driver)
+            elif my_random_event == "Проскролить страницу вниз и вверх, ввести в поиск сообщение, перейти по 4 ссылке, вернуться обратно, перейти по 2 ссылке, проскроллить вниз, вернуться на главную страницу, проскроллить главную страницу":
+                print(my_random_event)
+                all_in_one_super_random(driver)
+            else:
+                print("Незивестное действие.")
+
+            time.sleep(random.uniform(2, 5))
 
             end_time = time.monotonic()
 
@@ -219,10 +334,10 @@ async def main():
             for i in range(NUM_THREADS):
                 current_time = datetime.datetime.now().time()
                 if current_time >= datetime.time(20, 0) or current_time < datetime.time(7, 0):
-                    sleep_between_threads = random.uniform(1, 2.5)  #   random.uniform(600, 1200)
+                    sleep_between_threads = random.uniform(1, 2.5)  # random.uniform(600, 1200)
                     next_thread_time = datetime.datetime.now() + datetime.timedelta(seconds=sleep_between_threads)
-                    #print(
-                        #f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {round(int(sleep_between_threads) / 60)} минут")
+                    # print(
+                    # f"Сейчас ночь, поэтому следующий поток запустится через {datetime.timedelta(seconds=int(sleep_between_threads))} секунд = {round(int(sleep_between_threads) / 60)} минут")
                     print(f"Следующий поток запустится в {next_thread_time.strftime('%Y-%m-%d %H:%M:%S')}")
                 else:
                     sleep_between_threads = random.uniform(1, 2.5)
@@ -237,13 +352,13 @@ async def main():
             gc.collect()
             #   subprocess.call(['ipconfig', '/flushdns'])
             print("Память очищена.")
-    except Exception:
-        print("Очищаю память with error.")
+    except Exception as e:
+        print("Произошла ошибка:", str(e))
         del executor
         del loop
         gc.collect()
         #   subprocess.call(['ipconfig', '/flushdns'])
-        print("Память очищена with error.")
+        print("Память очищена с ошибкой.")
 
 
 if __name__ == '__main__':
