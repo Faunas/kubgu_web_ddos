@@ -1,1 +1,1 @@
-{"pause_time": "4.2", "NUM_THREADS": "5", "counter_web_sites": "1", "work_mode_only_from_config": "1", "art_on_start": "1", "new_user": "0", "views_to_write_logfile": "100", "debug_mode": "1"}
+{"pause_time": "1.2", "NUM_THREADS": "60", "counter_web_sites": "1", "work_mode_only_from_config": "1", "art_on_start": "0", "new_user": "0", "views_to_write_logfile": "20", "debug_mode": "0"}
